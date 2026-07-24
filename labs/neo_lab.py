@@ -194,7 +194,7 @@ class Launcher:
     controlled OFFBOARD climb.
     """
 
-    def __init__(self, target_height=DEFAULT_LAUNCH_HEIGHT, climb_kp=1.0, max_climb_speed=2.0,
+    def __init__(self, target_height=DEFAULT_LAUNCH_HEIGHT, climb_kp=2.0, max_climb_speed=2.0,
                  tol=0.25, settle=1.0):
         self.target_height = target_height
         self.climb_kp = climb_kp
@@ -320,7 +320,7 @@ def _autostart_enabled(autostart, drone):
 
 
 def run_module(title, steps, launch_height=DEFAULT_LAUNCH_HEIGHT, autostart=None, led_color=None,
-               launch=False):
+               launch=None):
     """Standard lab orchestrator: create the drone, arm and climb, then run each step in
     order and land. `steps` is a list of (label, module) where each module has reset()
     and update(drone) -> done. Records telemetry when NEO_RECORD is set.

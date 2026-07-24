@@ -23,8 +23,8 @@ import neo_lab
 # -- Constants --------------------------------------------------------------
 TARGET_HEIGHT = 5.0
 KP = 0.18
-KI = 0.06
-KD = 0.02
+KI = 0.03
+KD = 0.3
 INT_CLAMP = 3.0      # anti-windup limit on the integral
 THROTTLE_LIMIT = 0.5
 TOL = 0.15
@@ -33,7 +33,7 @@ HOLD_TIME = 3.0
 # -- Module-level state -----------------------------------------------------
 _err_int = 0.0
 _prev_err = 0.0
-_hold = 0.0
+_hold = 0.8
 _done = False
 
 def pid_control(err, err_int, err_dot, kp, ki, kd):

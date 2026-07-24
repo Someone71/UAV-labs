@@ -44,7 +44,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    output = err * kp + err_int * ki + err_dot * kd
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -78,6 +78,36 @@ def update(drone):
     # decode. Count time without a gate and land once it passes SEARCH_TIMEOUT,
     # so a missing gate ends the lab instead of spinning forever. See the README (Key terms) and
     # Week 2 Module 5 for detect_gate.
+
+    dt = drone.get_delta_time()
+    image = drone.camera.get_color_image()
+
+    gate = neo_lab.detect_gate(image)
+
+    if gate is None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, SEARCH_YAW, 0)
+        _hold = 0
+        _search_t += dt
+    else:
+        err = (gate.cx - COL_CENTER) / COL_CENTER
+        _err_int = uav_utils.clamp(_err_int + err * dt, -1, 1)
+        err_d = (err - _prev_err) / dt
+
+        _prev_err = err
+
+        yaw = uav_utils.clamp(pid_control(err, _err_int, err_d, KP, KI, KD), -MAX_YAW, MAX_YAW)
+        drone.flight.send_pcmd(0, 0, yaw, 0)
+
+        _search_t = 0
+
+        if abs(err) <= CENTER_TOL:
+            _hold += dt
+        else:
+            _hold = 0
+
+        if _hold >= HOLD_TIME:
+            print("Finished finding gate")
+            _done = True
 
     ###### END PUT CODE HERE #########
     ##################################

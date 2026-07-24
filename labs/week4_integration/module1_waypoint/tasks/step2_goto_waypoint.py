@@ -63,6 +63,35 @@ def update(drone):
     # neo_lab.altitude_hold_velocity. Command all three with send_velocity. Finish when both
     # horizontal errors are under POS_TOL and speed is under SETTLE_SPEED for HOLD_TIME.
 
+    dt = drone.get_delta_time()
+    vx, vy, vz = drone.physics.get_linear_velocity()
+
+    _x += vx * dt
+    _z += vz * dt
+    _y = neo_lab.height(drone)
+
+    err_x = TARGET_RIGHT - _x
+    err_z = TARGET_FWD - _z
+    err_y = TARGET_HEIGHT - _y
+
+    v_right = err_x * KP_POS
+    v_forward = err_z * KP_POS
+    v_up = neo_lab.altitude_hold_velocity(drone, TARGET_HEIGHT)
+
+    neo_lab.send_velocity(drone, v_right, v_up, v_forward)
+
+    speed = (vx ** 2 + vy ** 2 + vz ** 2) ** 0.5
+
+    if abs(err_x) <= POS_TOL and abs(err_z)<= POS_TOL and abs(err_y) <= POS_TOL and speed <= SETTLE_SPEED:
+        _hold += dt
+    else:
+        _hold = 0
+
+    if _hold >= HOLD_TIME:
+        print("Finished")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done
