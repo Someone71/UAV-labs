@@ -65,6 +65,35 @@ def update(drone):
     # roll error (clamp to MAX_ROLL). With too few line pixels, hover and count the time as
     # lost. Finish when the line has been lost for LOST_TIME (its end) or _timer hits MAX_FOLLOW.
 
+    dt = drone.get_delta_time()
+
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.saturated_mask(image, S_MIN)
+    points = np.argwhere(mask)
+
+    if len(points) < MIN_PIXELS:
+        drone.flight.stop()
+        _lost += dt
+    else:
+        _lost = 0
+        rows = points[:, 0]
+        far_row = rows.min() + (rows.max() - rows.min()) * LOOKAHEAD_FRAC
+        far = points[rows <= far_row]
+        near = points[rows > far_row]
+        far_col = (far if len(far) > 0 else points)[:, 1].mean()
+        near_col = (near if len(near) > 0 else points)[:, 1].mean()
+
+        yaw = uav_utils.clamp((far_col - IMAGE_CENTER) / IMAGE_CENTER * MAX_YAW, -MAX_YAW, MAX_YAW)
+        roll = uav_utils.clamp((near_col - IMAGE_CENTER) / IMAGE_CENTER * MAX_ROLL, -MAX_ROLL, MAX_ROLL)
+        drone.flight.send_pcmd(FORWARD_PITCH, roll, yaw, 0)
+
+    _timer += dt
+    
+    if _lost >= LOST_TIME or _timer >= MAX_FOLLOW:
+        print("Finished")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

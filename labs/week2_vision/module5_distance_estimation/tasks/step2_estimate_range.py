@@ -55,6 +55,22 @@ def update(drone):
     # Module 1 projection: distance = FOCAL_PX * REAL_TAG_SIZE / tag_px. Yaw to keep .cx on
     # COL_CENTER and add APPROACH_PITCH forward. Stop and finish once distance <= STOP_DIST.
 
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+
+    if gate is None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, 0, 0)
+
+    distance = FOCAL_PX * REAL_TAG_SIZE / gate.tag_px
+    err = (gate.cx - COL_CENTER) / COL_CENTER
+    yaw = uav_utils.clamp(err * MAX_YAW, -MAX_YAW, MAX_YAW)
+    drone.flight.send_pcmd(APPROACH_PITCH, 0, yaw, 0)
+
+    if distance <= STOP_DIST:
+        print("Finished")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

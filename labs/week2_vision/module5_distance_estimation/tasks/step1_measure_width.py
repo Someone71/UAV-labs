@@ -52,6 +52,21 @@ def update(drone):
     # Send SEARCH_PITCH forward each frame until detect_gate returns a Gate, then stop and
     # print .tag_px. Give up after SEARCH_TIMEOUT seconds.
 
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+
+    if gate is None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, 0, 0)
+    else:
+        print(f"Size: {gate.tag_px:.0f}, Count: {gate.count}")
+        drone.flight.stop()
+        _done = True
+
+    if _timer >= SEARCH_TIMEOUT:
+        print("Timeout")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

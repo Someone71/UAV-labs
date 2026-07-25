@@ -57,6 +57,25 @@ def update(drone):
     # forward pitch once it is centered (within CENTER_TOL). Finish only when centered
     # AND .tag_px reaches TARGET_TAG_PX.
 
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+
+    if gate is None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, SEARCH_YAW, 0)
+    else:
+        err = (gate.cx - COL_CENTER) / COL_CENTER
+        yaw = uav_utils.clamp(err * MAX_YAW, -MAX_YAW, MAX_YAW)
+
+        if abs(gate.cx - COL_CENTER) < CENTER_TOL:
+            drone.flight.send_pcmd(APPROACH_PITCH, 0, yaw, 0)
+        else:
+            drone.flight.send_pcmd(0, 0, yaw, 0)
+
+        if abs(gate.cx - COL_CENTER) < CENTER_TOL and gate.tag_px >= TARGET_TAG_PX:
+            print("Finished")
+            drone.flight.stop()
+            _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

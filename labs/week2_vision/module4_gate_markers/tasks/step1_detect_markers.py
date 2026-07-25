@@ -53,6 +53,21 @@ def update(drone):
     # The tags only decode up close, so send a small forward pitch (SEARCH_PITCH) each
     # frame until detect_gate returns a Gate; then stop, print .count and .ids, finish.
 
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+
+    if gate is None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, 0, 0)
+    else:
+        print(f"{gate.count} gates detected. Ids: {gate.ids}")
+        drone.flight.stop()
+        _done = True
+
+    if _timer >= SEARCH_TIMEOUT:
+        print("Timeout")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

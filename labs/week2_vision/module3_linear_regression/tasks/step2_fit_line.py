@@ -37,6 +37,15 @@ def fit_line(points):
     ##################################
     #### START PUT CODE HERE #########
     m, b = 0.0, 0.0
+
+    x = points[:,1]
+    y = points[:,0]
+
+    m, b = np.polyfit(x, y, 1)
+
+    m = round(m, 4)
+    b = round(b, 2)
+
     ###### END PUT CODE HERE #########
     ##################################
     return m, b
@@ -59,6 +68,20 @@ def update(drone):
     # Build the colored-line mask like Step 1 and collect the (row, col) of every line pixel.
     # If there are fewer than MIN_PIXELS, there is not enough line to fit -> return False.
     # Otherwise call fit_line() and print m, b, then set _done.
+
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.saturated_mask(image, S_MIN)
+    pixel = np.argwhere(mask)
+
+    if pixel.size >= MIN_PIXELS:
+        fit_line(pixel)
+
+    _timer += drone.get_delta_time()
+    if _timer <= ADVANCE_TIME:
+        drone.flight.send_pcmd(ADVANCE_PITCH, 0, 0, 0)
+    else:
+        print(fit_line(pixel))
+        _done = True
 
     ###### END PUT CODE HERE #########
     ##################################

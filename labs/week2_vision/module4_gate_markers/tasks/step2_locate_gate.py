@@ -52,6 +52,21 @@ def update(drone):
     # Send a small forward pitch (SEARCH_PITCH) each frame until detect_gate returns a
     # Gate; then stop, print its center and span, and finish.
 
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+
+    if gate is  None:
+        drone.flight.send_pcmd(SEARCH_PITCH, 0, 0, 0)
+    else:
+        print(f"Center: {gate.cx:.0f}, {gate.cy:.0f}. Span: {gate.span:.0f}. Count: {gate.count}")
+        drone.flight.stop()
+        _done = True
+
+    if _timer >= SEARCH_TIMEOUT:
+        print("Timeout")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done

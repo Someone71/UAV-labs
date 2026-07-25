@@ -49,6 +49,19 @@ def update(drone):
     # threshold by saturation: neo_lab.saturated_mask(image, S_MIN) gives a mask of the line
     # pixels. Count them, print the count, and set _done. See the README (Key terms).
 
+
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.saturated_mask(image, S_MIN)
+    count = np.count_nonzero(mask)
+
+    _timer += drone.get_delta_time()
+    if _timer <= ADVANCE_TIME:
+        drone.flight.send_pcmd(ADVANCE_PITCH, 0, 0, 0)
+    else:
+        print(f"Count: {count}")
+        drone.flight.stop()
+        _done = True
+
     ###### END PUT CODE HERE #########
     ##################################
     return _done
